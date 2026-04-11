@@ -11,6 +11,8 @@ import {
   Mail,
   Award,
   Home,
+  Info,
+  Phone
 } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 
@@ -25,6 +27,10 @@ const navItems = [
   { path: '/trends', icon: TrendingUp, label: 'Weekly Trends' },
   { path: '/badge', icon: Award, label: 'Carbon Badge' },
   { path: '/report', icon: Mail, label: 'Email Report' },
+
+  // ✅ New Pages
+  { path: '/about', icon: Info, label: 'About' },
+  { path: '/contact', icon: Phone, label: 'Contact' },
 ];
 
 export default function Sidebar() {
@@ -32,14 +38,17 @@ export default function Sidebar() {
   const location = useLocation();
 
   return (
-    <aside className={`w-full h-full flex flex-col overflow-y-auto border-r transition-colors duration-300 ${
-      isDarkMode
-        ? 'bg-gray-950/50 border-gray-800 backdrop-blur-xl'
-        : 'bg-white/50 border-gray-200 backdrop-blur-xl'
-    }`}>
+    <aside
+      className={`w-full h-full flex flex-col overflow-y-auto border-r transition-colors duration-300 ${
+        isDarkMode
+          ? 'bg-gray-950/50 border-gray-800 backdrop-blur-xl'
+          : 'bg-white/50 border-gray-200 backdrop-blur-xl'
+      }`}
+    >
       <nav className="flex-1 p-4 md:p-6 space-y-2">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.path;
+
           return (
             <NavLink key={item.path} to={item.path}>
               <motion.div
@@ -55,8 +64,14 @@ export default function Sidebar() {
                     : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-emerald-400' : ''}`} />
+                <item.icon
+                  className={`w-5 h-5 flex-shrink-0 ${
+                    isActive ? 'text-emerald-400' : ''
+                  }`}
+                />
+
                 <span className="font-medium text-sm">{item.label}</span>
+
                 {isActive && (
                   <motion.div
                     layoutId="activeIndicator"
@@ -69,22 +84,41 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Stats Box - Sticky at bottom */}
-      <div className={`flex-shrink-0 p-4 md:p-6 border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+      {/* Stats Box */}
+      <div
+        className={`flex-shrink-0 p-4 md:p-6 border-t ${
+          isDarkMode ? 'border-gray-800' : 'border-gray-200'
+        }`}
+      >
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className={`p-4 rounded-xl ${isDarkMode ? 'bg-gradient-to-br from-emerald-900/30 to-green-900/30 border border-emerald-500/20' : 'bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200'}`}
+          className={`p-4 rounded-xl ${
+            isDarkMode
+              ? 'bg-gradient-to-br from-emerald-900/30 to-green-900/30 border border-emerald-500/20'
+              : 'bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200'
+          }`}
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
                 Total CO₂ Saved
               </p>
-              <p className="text-3xl font-bold text-emerald-400 mt-2">12.5 kg</p>
-              <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>This month</p>
+
+              <p className="text-3xl font-bold text-emerald-400 mt-2">
+                12.5 kg
+              </p>
+
+              <p className="text-xs mt-2 text-gray-500">
+                This month
+              </p>
             </div>
+
             <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400/20 to-green-500/20 flex items-center justify-center">
               <span className="text-lg">🌱</span>
             </div>

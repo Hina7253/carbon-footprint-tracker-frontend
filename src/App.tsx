@@ -1,3 +1,5 @@
+
+
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useAppStore } from './store/appStore';
@@ -12,6 +14,8 @@ import Chat from './pages/Chat';
 import Trends from './pages/Trends';
 import Badge from './pages/Badge';
 import Report from './pages/Report';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 function App() {
   const { isDarkMode } = useAppStore();
@@ -38,6 +42,8 @@ function App() {
           <Route path="/trends" element={<Trends />} />
           <Route path="/badge" element={<Badge />} />
           <Route path="/report" element={<Report />} />
+          <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
         </Routes>
       </Layout>
     </BrowserRouter>
