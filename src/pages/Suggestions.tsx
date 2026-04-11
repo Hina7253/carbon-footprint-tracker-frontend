@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Image, Code, Zap, Leaf, CheckCircle, AlertTriangle, Lightbulb } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
-import { aiSuggestions } from '../lib/mockData';
+
 
 const iconMap = {
   image: Image,
@@ -18,6 +18,49 @@ const colorMap = {
 };
 
 const defaultColors = { bg: 'from-gray-500/20 to-gray-600/20', border: 'border-gray-500/30', icon: 'from-gray-500 to-gray-600' };
+
+const aiSuggestions = [
+  {
+    category: 'Images',
+    icon: 'image',
+    suggestions: [
+      'Convert PNG/JPG to WebP format',
+      'Implement lazy loading for images',
+      'Use responsive image sizes',
+      'Add image compression',
+    ],
+  },
+  {
+    category: 'Scripts',
+    icon: 'code',
+    suggestions: [
+      'Remove unused JavaScript',
+      'Defer non-critical scripts',
+      'Implement code splitting',
+      'Minify and bundle JavaScript',
+    ],
+  },
+  {
+    category: 'Performance',
+    icon: 'zap',
+    suggestions: [
+      'Enable GZIP compression',
+      'Implement caching headers',
+      'Use a CDN for static assets',
+      'Optimize CSS delivery',
+    ],
+  },
+  {
+    category: 'Green Hosting',
+    icon: 'leaf',
+    suggestions: [
+      'Switch to renewable energy hosting',
+      'Optimize server response times',
+      'Reduce unnecessary requests',
+      'Implement efficient databases',
+    ],
+  },
+];
 
 export default function Suggestions() {
   const { isDarkMode, currentAnalysis } = useAppStore();

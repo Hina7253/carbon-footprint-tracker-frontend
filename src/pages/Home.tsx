@@ -3,27 +3,46 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Leaf, Globe, Zap, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
-import { generateMockAnalysis } from '../lib/mockData';
+
+import carbonApi from '../lib/api';        
 
 export default function Home() {
   const { isDarkMode, setCurrentAnalysis, setIsLoading } = useAppStore();
+  
   const [url, setUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
 
+  // ==================== REAL API CALL ====================
   const handleAnalyze = async () => {
-    if (!url) return;
+    if (!url.trim()) return;
+
     setIsAnalyzing(true);
     setIsLoading(true);
-    
-    // Simulate analysis
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    const analysis = generateMockAnalysis(url);
-    setCurrentAnalysis(analysis);
-    setIsAnalyzing(false);
-    setIsLoading(false);
-    navigate('/dashboard');
+
+    try {
+      // Real Backend API Call
+      const analysis = await carbonApi.startAnalysis(url);
+      console.log("API RESPONSE:", analysis);
+
+      
+      setCurrentAnalysis(analysis);
+
+      
+      navigate('/dashboard');
+
+    } catch (error: any) {
+      console.error("Analysis Error:", error);
+      
+      const errorMessage = error.response?.data?.message 
+        || error.message 
+        || "Failed to analyze website. Please check URL and try again.";
+      
+      alert(`❌ ${errorMessage}`);
+    } finally {
+      setIsAnalyzing(false);
+      setIsLoading(false);
+    }
   };
 
   const features = [
@@ -34,157 +53,111 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 dark:from-gray-950 dark:to-emerald-950">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 ${
-          isDarkMode ? 'bg-emerald-500' : 'bg-emerald-300'
-        }`} />
-        <div className={`absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-20 ${
-          isDarkMode ? 'bg-cyan-500' : 'bg-cyan-300'
-        }`} />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Hero Content */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 text-center max-w-4xl mx-auto px-6"
-      >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          className="w-20 h-20 mx-auto mb-8 rounded-3xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-2xl shadow-emerald-500/30"
-        >
-          <Leaf className="w-10 h-10 text-white" />
-        </motion.div>
-
-        <h1 className={`text-5xl md:text-7xl font-bold mb-6 ${
-          isDarkMode ? 'text-white' : 'text-gray-900'
-        }`}>
-          Measure Your Website's
-          <span className="block bg-gradient-to-r from-emerald-400 via-green-500 to-cyan-500 bg-clip-text text-transparent">
-            Carbon Footprint
-          </span>
+      <div className="relative max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
+        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
+          Measure Your Website's <span className="text-emerald-600">Carbon Footprint</span>
         </h1>
-
-        <p className={`text-xl md:text-2xl mb-12 max-w-2xl mx-auto ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}>
+        <p className="text-xl text-gray-600 dark:text-gray-400 mb-10">
           Analyze, compare, and optimize your website's environmental impact with AI-powered insights
         </p>
 
         {/* Search Box */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className={`relative max-w-2xl mx-auto rounded-2xl p-2 ${
-            isDarkMode
-              ? 'bg-gray-900/80 border border-gray-800'
-              : 'bg-white border border-gray-200 shadow-xl'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-              <Search className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-            </div>
+        <div className="max-w-2xl mx-auto">
+          <div className={`flex items-center gap-3 p-2 rounded-2xl border ${
+            isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200 shadow-lg'
+          }`}>
+            <Search className={`w-6 h-6 ml-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+            
             <input
-              type="url"
+              type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
               placeholder="Enter website URL (e.g., example.com)"
               className={`flex-1 bg-transparent outline-none text-lg ${
-                isDarkMode
-                  ? 'text-white placeholder-gray-500'
-                  : 'text-gray-900 placeholder-gray-400'
+                isDarkMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
               }`}
-              onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
             />
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold flex items-center gap-2 shadow-lg shadow-emerald-500/30 disabled:opacity-70"
+              disabled={isAnalyzing || !url.trim()}
+              className={`px-8 py-4 rounded-xl font-semibold flex items-center gap-2 transition-all ${
+                isAnalyzing 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              }`}
             >
               {isAnalyzing ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                  className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                />
+                <>Analyzing...</>
               ) : (
                 <>
-                  Analyze
-                  <ArrowRight className="w-5 h-5" />
+                  Analyze <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </motion.button>
           </div>
-        </motion.div>
+        </div>
+      </div>
 
-        {/* Loading Animation */}
-        <AnimatePresence>
-          {isAnalyzing && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mt-8"
-            >
-              <div className="flex items-center justify-center gap-2">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ y: [-4, 4, -4] }}
-                    transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.1 }}
-                    className="w-3 h-3 rounded-full bg-emerald-500"
-                  />
-                ))}
-              </div>
-              <p className={`mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Analyzing website...
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+      {/* Loading Animation */}
+      <AnimatePresence>
+        {isAnalyzing && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="text-center">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-4 h-4 bg-emerald-500 rounded-full inline-block mx-1"
+                  animate={{
+                    scale: [1, 1.5, 1],
+                    opacity: [0.6, 1, 0.6],
+                  }}
+                  transition={{
+                    duration: 1.2,
+                    repeat: Infinity,
+                    delay: i * 0.2,
+                  }}
+                />
+              ))}
+              <p className="mt-6 text-white text-lg">Analyzing website...</p>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Features Grid */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-20 px-6"
-      >
-        {features.map((feature, i) => (
-          <motion.div
-            key={feature.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 + i * 0.1 }}
-            whileHover={{ y: -4 }}
-            className={`p-5 rounded-2xl text-center transition-all ${
-              isDarkMode
-                ? 'bg-gray-900/50 border border-gray-800 hover:border-emerald-500/50'
-                : 'bg-white/80 border border-gray-200 hover:border-emerald-500/50 shadow-lg'
-            }`}
-          >
-            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center">
-              <feature.icon className="w-6 h-6 text-emerald-500" />
-            </div>
-            <h3 className={`font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              {feature.title}
-            </h3>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-              {feature.desc}
-            </p>
-          </motion.div>
-        ))}
-      </motion.div>
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="grid md:grid-cols-4 gap-6">
+          {features.map((feature, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className={`p-6 rounded-2xl ${
+                isDarkMode ? 'bg-gray-900' : 'bg-white shadow'
+              }`}
+            >
+              <feature.icon className="w-10 h-10 text-emerald-600 mb-4" />
+              <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {feature.desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Clock ,Info, Phone} from 'lucide-react';
 import {
   LayoutDashboard,
   FolderOpen,
@@ -25,6 +26,8 @@ const navItems = [
   { path: '/trends', icon: TrendingUp, label: 'Weekly Trends' },
   { path: '/badge', icon: Award, label: 'Carbon Badge' },
   { path: '/report', icon: Mail, label: 'Email Report' },
+  { path: '/history', icon: Clock, label: 'History' },  
+            
 ];
 
 export default function Sidebar() {

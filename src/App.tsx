@@ -12,6 +12,8 @@ import Chat from './pages/Chat';
 import Trends from './pages/Trends';
 import Badge from './pages/Badge';
 import Report from './pages/Report';
+import History from './pages/History';
+
 
 function App() {
   const { isDarkMode } = useAppStore();
@@ -38,6 +40,8 @@ function App() {
           <Route path="/trends" element={<Trends />} />
           <Route path="/badge" element={<Badge />} />
           <Route path="/report" element={<Report />} />
+          <Route path="/history" element={<History />} />
+          
         </Routes>
       </Layout>
     </BrowserRouter>

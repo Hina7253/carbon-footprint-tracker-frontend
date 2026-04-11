@@ -6,16 +6,18 @@ import MetricCard from '../components/MetricCard';
 import ProgressBar from '../components/ProgressBar';
 import SkeletonLoader from '../components/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { generateMockAnalysis } from '../lib/mockData';
+import { useEffect } from 'react';       
 
 export default function Dashboard() {
   const { isDarkMode, currentAnalysis, setCurrentAnalysis, isLoading } = useAppStore();
   const navigate = useNavigate();
 
+  // ==================== REAL API से डेटा लोड करें ====================
   useEffect(() => {
+    
     if (!currentAnalysis) {
-      setCurrentAnalysis(generateMockAnalysis('example.com'));
+      
+      console.log("No current analysis found. Please analyze a website first.");
     }
   }, [currentAnalysis, setCurrentAnalysis]);
 
@@ -33,20 +35,22 @@ export default function Dashboard() {
     );
   }
 
+  
   const resourceDistribution = [
-    { name: 'Images', value: currentAnalysis.resources.filter(r => r.type === 'image').length, color: '#10b981' },
-    { name: 'Scripts', value: currentAnalysis.resources.filter(r => r.type === 'script').length, color: '#3b82f6' },
-    { name: 'Stylesheets', value: currentAnalysis.resources.filter(r => r.type === 'stylesheet').length, color: '#f59e0b' },
-    { name: 'Videos', value: currentAnalysis.resources.filter(r => r.type === 'video').length, color: '#ef4444' },
-    { name: 'Fonts', value: currentAnalysis.resources.filter(r => r.type === 'font').length, color: '#8b5cf6' },
-    { name: 'Other', value: currentAnalysis.resources.filter(r => r.type === 'other').length, color: '#6b7280' },
+    { name: 'Images', value: currentAnalysis.resources?.filter((r: any) => r.type === 'image').length || 0, color: '#10b981' },
+    { name: 'Scripts', value: currentAnalysis.resources?.filter((r: any) => r.type === 'script').length || 0, color: '#3b82f6' },
+    { name: 'Stylesheets', value: currentAnalysis.resources?.filter((r: any) => r.type === 'stylesheet').length || 0, color: '#f59e0b' },
+    { name: 'Videos', value: currentAnalysis.resources?.filter((r: any) => r.type === 'video').length || 0, color: '#ef4444' },
+    { name: 'Fonts', value: currentAnalysis.resources?.filter((r: any) => r.type === 'font').length || 0, color: '#8b5cf6' },
+    { name: 'Other', value: currentAnalysis.resources?.filter((r: any) => !['image','script','stylesheet','video','font'].includes(r.type)).length || 0, color: '#6b7280' },
   ].filter(item => item.value > 0);
 
+  // Performance Data (Backend के actual fields के अनुसार adjust किया)
   const performanceData = [
-    { name: 'FCP', value: 1.2, benchmark: 1.8 },
-    { name: 'LCP', value: 2.1, benchmark: 2.5 },
+    { name: 'FCP', value: currentAnalysis.loadTime || 1.2, benchmark: 1.8 },
+    { name: 'LCP', value: currentAnalysis.loadTime || 2.1, benchmark: 2.5 },
     { name: 'CLS', value: 0.05, benchmark: 0.1 },
-    { name: 'TTI', value: 3.2, benchmark: 3.8 },
+    { name: 'TTI', value: currentAnalysis.loadTime || 3.2, benchmark: 3.8 },
     { name: 'TBT', value: 150, benchmark: 200 },
   ];
 
@@ -59,7 +63,9 @@ export default function Dashboard() {
             Dashboard
           </h1>
           <p className={`mt-1 text-sm sm:text-base truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Analysis for <span className="text-emerald-500 font-medium">{currentAnalysis.url}</span>
+            Analysis for <span className="text-emerald-500 font-medium">
+              {currentAnalysis.url}
+            </span>
           </p>
         </div>
         <motion.button
@@ -76,7 +82,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-2 sm:px-0">
         <MetricCard
           title="Page Size"
-          value={currentAnalysis.pageSize}
+          value={currentAnalysis.pageSize || 0}
           unit="MB"
           icon={FileText}
           color="blue"
@@ -84,7 +90,7 @@ export default function Dashboard() {
         />
         <MetricCard
           title="CO₂ Emission"
-          value={currentAnalysis.co2Emission}
+          value={currentAnalysis.co2Emission || 0}
           unit="g/view"
           icon={Cloud}
           color="emerald"
@@ -92,7 +98,7 @@ export default function Dashboard() {
         />
         <MetricCard
           title="Load Time"
-          value={currentAnalysis.loadTime}
+          value={currentAnalysis.loadTime || 0}
           unit="sec"
           icon={Clock}
           color="orange"
@@ -100,7 +106,7 @@ export default function Dashboard() {
         />
         <MetricCard
           title="Resources"
-          value={currentAnalysis.totalResources}
+          value={currentAnalysis.totalResources || currentAnalysis.resources?.length || 0}
           unit="files"
           icon={Layers}
           color="purple"
@@ -133,17 +139,17 @@ export default function Dashboard() {
               currentAnalysis.performanceScore >= 80 ? 'text-emerald-500' :
               currentAnalysis.performanceScore >= 60 ? 'text-yellow-500' : 'text-red-500'
             }`}>
-              {currentAnalysis.performanceScore}
+              {currentAnalysis.performanceScore || 0}
             </span>
           </div>
         </div>
         <ProgressBar
-          value={currentAnalysis.performanceScore}
+          value={currentAnalysis.performanceScore || 65}
           label="Overall Performance"
         />
       </motion.div>
 
-      {/* Charts */}
+      {/* Charts - UI वैसी ही रखी है */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 px-2 sm:px-0">
         {/* Resource Distribution Pie Chart */}
         <motion.div
@@ -182,7 +188,6 @@ export default function Dashboard() {
                   boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
                   fontSize: '12px',
                 }}
-                labelStyle={{ color: isDarkMode ? '#fff' : '#000' }}
               />
               <Legend
                 wrapperStyle={{ fontSize: '12px' }}
@@ -241,7 +246,7 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions - unchanged */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

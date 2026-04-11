@@ -1,40 +1,24 @@
 import { motion } from 'framer-motion';
-import { Leaf, Mail, MapPin, Phone, Github, Linkedin, Twitter, ArrowUp } from 'lucide-react';
+import { Leaf, Github, Linkedin, Twitter, ArrowUp } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
-import { useState } from 'react';
 
-interface FooterProps {
-  isSidebarOpen?: boolean;
-}
-
-export default function Footer({ isSidebarOpen = false }: FooterProps) {
+export default function Footer(): React.ReactNode {
   const { isDarkMode } = useAppStore();
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail('');
-      setTimeout(() => setSubscribed(false), 3000);
-    }
-  };
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const footerLinks = [
-    {
-      title: 'Product',
-      links: [
-        { label: 'Features', href: '#' },
-        { label: 'Pricing', href: '#' },
-        { label: 'Security', href: '#' },
-        { label: 'Roadmap', href: '#' },
-      ],
-    },
+    // {
+    //   title: 'Product',
+    //   links: [
+    //     { label: 'Features', href: '#' },
+    //     { label: 'Pricing', href: '#' },
+    //     { label: 'Security', href: '#' },
+    //     { label: 'Roadmap', href: '#' },
+    //   ],
+    // },
     {
       title: 'Resources',
       links: [
@@ -56,18 +40,12 @@ export default function Footer({ isSidebarOpen = false }: FooterProps) {
     {
       title: 'Legal',
       links: [
-        { label: 'Privacy', href: '#' },
+        { label: 'Privacy', href: '/CommingSoon' },
         { label: 'Terms', href: '#' },
         { label: 'Cookies', href: '#' },
         { label: 'License', href: '#' },
       ],
     },
-  ];
-
-  const stats = [
-    { label: 'Websites Analyzed', value: '50K+' },
-    { label: 'CO₂ Saved', value: '125K kg' },
-    { label: 'Users Active', value: '12K+' },
   ];
 
   const containerVariants = {

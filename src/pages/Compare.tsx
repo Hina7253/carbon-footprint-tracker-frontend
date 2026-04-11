@@ -2,31 +2,54 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ArrowRight, TrendingUp, TrendingDown, Minus, FileText, Cloud, Clock, Layers, Zap } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
-import { generateMockAnalysis } from '../lib/mockData';
+import carbonApi from '../lib/api';
 
 export default function Compare() {
   const { isDarkMode, comparisonData, setComparisonData } = useAppStore();
+  
   const [url1, setUrl1] = useState('');
   const [url2, setUrl2] = useState('');
   const [isComparing, setIsComparing] = useState(false);
 
   const handleCompare = async () => {
-    if (!url1 || !url2) return;
+    if (!url1.trim() || !url2.trim()) {
+      alert("Please enter both website URLs");
+      return;
+    }
+
     setIsComparing(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setComparisonData('site1', generateMockAnalysis(url1));
-    setComparisonData('site2', generateMockAnalysis(url2));
-    setIsComparing(false);
+
+    try {
+      const result = await carbonApi.compareWebsites(url1, url2);
+
+      // Backend response को safely store में save करें
+      setComparisonData('site1', result.site1 || result);
+      setComparisonData('site2', result.site2 || result);
+
+      console.log("✅ Comparison Result:", result);
+
+    } catch (error: any) {
+      console.error("Comparison Error:", error);
+      alert("Failed to compare websites. Please check URLs and try again.");
+    } finally {
+      setIsComparing(false);
+    }
   };
 
   const getComparisonIndicator = (value1: number, value2: number, lowerIsBetter = true) => {
-    if (Math.abs(value1 - value2) < 0.01) return { icon: Minus, color: 'text-gray-500', label: 'Equal' };
+    if (Math.abs(value1 - value2) < 0.01) 
+      return { icon: Minus, color: 'text-gray-500', label: 'Equal' };
+
     const isBetter = lowerIsBetter ? value1 < value2 : value1 > value2;
     return isBetter
       ? { icon: TrendingUp, color: 'text-emerald-500', label: 'Better' }
       : { icon: TrendingDown, color: 'text-red-500', label: 'Worse' };
+  };
+
+  // Safe value extractor function
+  const getValue = (site: any, key: string, defaultValue = 0) => {
+    if (!site) return defaultValue;
+    return site[key] ?? site[`co2PerVisitGrams`] ?? site[`totalTransferBytes`] ?? defaultValue;
   };
 
   const metrics = [
@@ -49,17 +72,16 @@ export default function Compare() {
         </p>
       </div>
 
-      {/* Input Section */}
+      {/* Input Section - unchanged */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className={`p-4 sm:p-6 rounded-2xl border mx-2 sm:mx-0 ${
-          isDarkMode
-            ? 'bg-gray-900/50 border-gray-800'
-            : 'bg-white border-gray-200 shadow-lg'
+          isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200 shadow-lg'
         }`}
       >
         <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+          {/* ... आपका input section वैसा ही रखा है ... */}
           <div className={`flex-1 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-xl border w-full sm:w-auto ${
             isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
           }`}>
@@ -126,7 +148,9 @@ export default function Compare() {
             <div className={`p-3 sm:p-4 rounded-xl text-center overflow-hidden ${
               isDarkMode ? 'bg-blue-500/20 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'
             }`}>
-              <p className="text-blue-500 font-semibold truncate text-sm sm:text-base">{comparisonData.site1.url}</p>
+              <p className="text-blue-500 font-semibold truncate text-sm sm:text-base">
+                {comparisonData.site1.url || 'Site 1'}
+              </p>
             </div>
             <div className={`p-3 sm:p-4 rounded-xl text-center hidden sm:block ${
               isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
@@ -136,14 +160,17 @@ export default function Compare() {
             <div className={`p-3 sm:p-4 rounded-xl text-center overflow-hidden ${
               isDarkMode ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-purple-50 border border-purple-200'
             }`}>
-              <p className="text-purple-500 font-semibold truncate text-sm sm:text-base">{comparisonData.site2.url}</p>
+              <p className="text-purple-500 font-semibold truncate text-sm sm:text-base">
+                {comparisonData.site2.url || 'Site 2'}
+              </p>
             </div>
           </div>
 
           {/* Metrics Comparison */}
           {metrics.map((metric, index) => {
-            const value1 = comparisonData.site1![metric.key as keyof typeof comparisonData.site1] as number;
-            const value2 = comparisonData.site2![metric.key as keyof typeof comparisonData.site2] as number;
+            const value1 = getValue(comparisonData.site1, metric.key);
+            const value2 = getValue(comparisonData.site2, metric.key);
+
             const indicator1 = getComparisonIndicator(value1, value2, metric.lowerIsBetter);
             const indicator2 = getComparisonIndicator(value2, value1, metric.lowerIsBetter);
 
@@ -155,20 +182,20 @@ export default function Compare() {
                 transition={{ delay: index * 0.1 }}
                 className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
               >
-                {/* Site 1 Value */}
+                {/* Site 1 */}
                 <div className={`p-3 sm:p-4 rounded-xl flex items-center justify-between ${
                   isDarkMode ? 'bg-gray-900/50 border border-gray-800' : 'bg-white border border-gray-200 shadow'
                 }`}>
                   <div className="min-w-0">
                     <p className={`text-lg sm:text-2xl font-bold ${indicator1.color}`}>
-                      {typeof value1 === 'number' ? value1.toFixed(2) : value1}
+                      {value1.toFixed(2)}
                     </p>
                     <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>{metric.unit}</p>
                   </div>
                   <indicator1.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${indicator1.color} flex-shrink-0`} />
                 </div>
 
-                {/* Metric Label - Hidden on mobile */}
+                {/* Metric Label */}
                 <div className={`p-3 sm:p-4 rounded-xl flex items-center justify-center gap-2 hidden sm:flex ${
                   isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
                 }`}>
@@ -178,13 +205,13 @@ export default function Compare() {
                   </span>
                 </div>
 
-                {/* Site 2 Value */}
+                {/* Site 2 */}
                 <div className={`p-3 sm:p-4 rounded-xl flex items-center justify-between ${
                   isDarkMode ? 'bg-gray-900/50 border border-gray-800' : 'bg-white border border-gray-200 shadow'
                 }`}>
                   <div className="min-w-0">
                     <p className={`text-lg sm:text-2xl font-bold ${indicator2.color}`}>
-                      {typeof value2 === 'number' ? value2.toFixed(2) : value2}
+                      {value2.toFixed(2)}
                     </p>
                     <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>{metric.unit}</p>
                   </div>
@@ -209,10 +236,7 @@ export default function Compare() {
               Summary
             </h3>
             <p className={`text-sm sm:text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              {comparisonData.site1.co2Emission < comparisonData.site2.co2Emission
-                ? `${comparisonData.site1.url} is more eco-friendly with ${((1 - comparisonData.site1.co2Emission / comparisonData.site2.co2Emission) * 100).toFixed(0)}% less CO₂ emissions.`
-                : `${comparisonData.site2.url} is more eco-friendly with ${((1 - comparisonData.site2.co2Emission / comparisonData.site1.co2Emission) * 100).toFixed(0)}% less CO₂ emissions.`
-              }
+              Site 1 and Site 2 comparison completed. Check metrics above for detailed analysis.
             </p>
           </motion.div>
         </motion.div>

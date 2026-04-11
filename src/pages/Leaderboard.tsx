@@ -1,9 +1,47 @@
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Award, TrendingUp, TrendingDown, Leaf, Flame } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import carbonApi from '../lib/api';        // ← Real API Import
+import { useEffect, useState } from 'react';
+
+interface LeaderboardSite {
+  url?: string;
+  websiteUrl?: string;
+  co2PerVisitGrams?: number;
+  co2Emission?: number;
+  totalTransferBytes?: number;
+  pageSize?: number;
+  performanceScore?: string | number;
+  grade?: string;
+}
 
 export default function Leaderboard() {
-  const { isDarkMode, leaderboard } = useAppStore();
+  const { isDarkMode } = useAppStore();
+  const [leaderboard, setLeaderboard] = useState<{ eco: LeaderboardSite[]; carbon: LeaderboardSite[] }>({ eco: [], carbon: [] });
+  const [loading, setLoading] = useState(true);
+
+  // ==================== REAL API CALL ====================
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        setLoading(true);
+        const data = await carbonApi.getLeaderboard();   // Real API
+        
+        // Backend से जो data आए, उसे store में set कर दो
+        setLeaderboard({
+          eco: data.cleanest || data.eco || [],
+          carbon: data.dirtiest || data.carbon || []
+        });
+      } catch (error) {
+        console.error("Leaderboard API Error:", error);
+        // अगर API fail हो तो fallback empty array रख सकते हैं
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -30,6 +68,14 @@ export default function Leaderboard() {
         return isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading Leaderboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full">
@@ -71,7 +117,7 @@ export default function Leaderboard() {
           <div className="space-y-2 sm:space-y-3">
             {leaderboard.eco.map((site, index) => (
               <motion.div
-                key={site.url}
+                key={site.url || index}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -85,20 +131,22 @@ export default function Leaderboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`font-semibold text-sm sm:text-base truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {site.url}
+                    {site.websiteUrl || site.url}
                   </p>
                   <div className="flex items-center gap-2 sm:gap-4 mt-1 flex-wrap">
                     <span className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {site.co2Emission.toFixed(2)}g CO₂
+                      {(site.co2PerVisitGrams || site.co2Emission || 0).toFixed(2)}g CO₂
                     </span>
                     <span className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {site.pageSize.toFixed(2)} MB
+                      {((site.totalTransferBytes || site.pageSize || 0) / 1024 / 1024).toFixed(2)} MB
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-emerald-500 flex-shrink-0">
                   <TrendingUp className="w-4 h-4" />
-                  <span className="text-xs sm:text-sm font-medium">{site.performanceScore}</span>
+                  <span className="text-xs sm:text-sm font-medium">
+                    {site.performanceScore || site.grade || 'N/A'}
+                  </span>
                 </div>
               </motion.div>
             ))}
@@ -132,7 +180,7 @@ export default function Leaderboard() {
           <div className="space-y-2 sm:space-y-3">
             {leaderboard.carbon.map((site, index) => (
               <motion.div
-                key={site.url}
+                key={site.url || index}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -150,20 +198,22 @@ export default function Leaderboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`font-semibold text-sm sm:text-base truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {site.url}
+                    {site.websiteUrl || site.url}
                   </p>
                   <div className="flex items-center gap-2 sm:gap-4 mt-1 flex-wrap">
                     <span className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {site.co2Emission.toFixed(2)}g CO₂
+                      {(site.co2PerVisitGrams || site.co2Emission || 0).toFixed(2)}g CO₂
                     </span>
                     <span className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {site.pageSize.toFixed(2)} MB
+                      {((site.totalTransferBytes || site.pageSize || 0) / 1024 / 1024).toFixed(2)} MB
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-red-500 flex-shrink-0">
                   <TrendingDown className="w-4 h-4" />
-                  <span className="text-xs sm:text-sm font-medium">{site.performanceScore}</span>
+                  <span className="text-xs sm:text-sm font-medium">
+                    {site.performanceScore || site.grade || 'N/A'}
+                  </span>
                 </div>
               </motion.div>
             ))}
@@ -171,7 +221,7 @@ export default function Leaderboard() {
         </motion.div>
       </div>
 
-      {/* Stats Summary */}
+      {/* Stats Summary - unchanged */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

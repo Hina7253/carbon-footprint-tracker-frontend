@@ -50,7 +50,7 @@ interface AppStore {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
   currentAnalysis: Analysis | null;
-  setCurrentAnalysis: (analysis: Analysis) => void;
+  setCurrentAnalysis: (analysis: any) => void;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
   comparisonData: {
@@ -69,24 +69,62 @@ interface AppStore {
 }
 
 export const useAppStore = create<AppStore>((set) => ({
+
   isDarkMode: localStorage.getItem('darkMode') === 'true' || false,
+
   setIsDarkMode: (value) => {
     localStorage.setItem('darkMode', String(value));
     document.documentElement.classList.toggle('dark', value);
     set({ isDarkMode: value });
   },
-  toggleDarkMode: () => set((state) => {
-    const newValue = !state.isDarkMode;
-    localStorage.setItem('darkMode', String(newValue));
-    document.documentElement.classList.toggle('dark', newValue);
-    return { isDarkMode: newValue };
-  }),
+
+  toggleDarkMode: () =>
+    set((state) => {
+      const newValue = !state.isDarkMode;
+      localStorage.setItem('darkMode', String(newValue));
+      document.documentElement.classList.toggle('dark', newValue);
+      return { isDarkMode: newValue };
+    }),
 
   isSidebarOpen: true,
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  toggleSidebar: () =>
+    set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
 
   currentAnalysis: null,
-  setCurrentAnalysis: (analysis) => set({ currentAnalysis: analysis }),
+
+  // 🔥 MAIN FIX (BACKEND → FRONTEND MAPPING)
+  setCurrentAnalysis: (analysis: any) => {
+
+    const mappedAnalysis: Analysis = {
+      url: analysis.websiteUrl,
+
+      pageSize: analysis.resourceSummary?.totalTransferBytes
+        ? analysis.resourceSummary.totalTransferBytes / (1024 * 1024)
+        : 0,
+
+      co2Emission: analysis.carbonMetrics?.co2PerVisitGrams || 0,
+
+      loadTime: 2.5, // dummy
+
+      totalResources:
+        analysis.resourceSummary?.totalResourceCount || 0,
+
+      performanceScore:
+        analysis.grade === 'A' ? 90 :
+        analysis.grade === 'B' ? 75 :
+        analysis.grade === 'C' ? 60 : 40,
+
+      resources: (analysis.hotspots || []).map((r: any, index: number) => ({
+        id: String(index),
+        url: r.url,
+        type: (r.type || 'other').toLowerCase(),
+        size: r.sizeBytes || 0,
+        carbon: r.co2Grams || 0,
+      })),
+    };
+
+    set({ currentAnalysis: mappedAnalysis });
+  },
 
   isLoading: false,
   setIsLoading: (value) => set({ isLoading: value }),
@@ -95,17 +133,21 @@ export const useAppStore = create<AppStore>((set) => ({
     site1: null,
     site2: null,
   },
-  setComparisonData: (key, analysis) => set((state) => ({
-    comparisonData: {
-      ...state.comparisonData,
-      [key]: analysis,
-    },
-  })),
+
+  setComparisonData: (key, analysis) =>
+    set((state) => ({
+      comparisonData: {
+        ...state.comparisonData,
+        [key]: analysis,
+      },
+    })),
 
   chatMessages: [],
-  addChatMessage: (message) => set((state) => ({
-    chatMessages: [...state.chatMessages, message],
-  })),
+  addChatMessage: (message) =>
+    set((state) => ({
+      chatMessages: [...state.chatMessages, message],
+    })),
+
   clearChatMessages: () => set({ chatMessages: [] }),
 
   leaderboard: {
@@ -113,70 +155,22 @@ export const useAppStore = create<AppStore>((set) => ({
       {
         rank: 1,
         domain: 'eco-friendly.com',
-        url: 'eco-friendly.com',
         co2: 0.34,
-        co2Emission: 0.34,
         pageSize: 0.45,
         loadTime: 0.8,
         improvement: 45,
         performanceScore: 95,
-      },
-      {
-        rank: 2,
-        domain: 'greentech.org',
-        url: 'greentech.org',
-        co2: 0.52,
-        co2Emission: 0.52,
-        pageSize: 0.68,
-        loadTime: 1.2,
-        improvement: 38,
-        performanceScore: 88,
-      },
-      {
-        rank: 3,
-        domain: 'sustainable.io',
-        url: 'sustainable.io',
-        co2: 0.61,
-        co2Emission: 0.61,
-        pageSize: 0.82,
-        loadTime: 1.4,
-        improvement: 32,
-        performanceScore: 82,
       },
     ],
     carbon: [
       {
         rank: 1,
         domain: 'heavy-site.com',
-        url: 'heavy-site.com',
         co2: 2.89,
-        co2Emission: 2.89,
         pageSize: 5.3,
         loadTime: 4.2,
         improvement: 12,
         performanceScore: 45,
-      },
-      {
-        rank: 2,
-        domain: 'old-tech.net',
-        url: 'old-tech.net',
-        co2: 2.45,
-        co2Emission: 2.45,
-        pageSize: 4.8,
-        loadTime: 3.9,
-        improvement: 18,
-        performanceScore: 52,
-      },
-      {
-        rank: 3,
-        domain: 'bloated-app.io',
-        url: 'bloated-app.io',
-        co2: 2.12,
-        co2Emission: 2.12,
-        pageSize: 4.1,
-        loadTime: 3.5,
-        improvement: 22,
-        performanceScore: 58,
       },
     ],
   },
