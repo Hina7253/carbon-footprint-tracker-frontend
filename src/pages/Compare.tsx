@@ -11,6 +11,13 @@ export default function Compare() {
   const [url2, setUrl2] = useState('');
   const [isComparing, setIsComparing] = useState(false);
 
+  const formatUrl = (url: string) => {
+  if (!url.startsWith('http')) {
+    return `https://${url}`;
+  }
+  return url;
+};
+
   const handleCompare = async () => {
     if (!url1.trim() || !url2.trim()) {
       alert("Please enter both website URLs");
@@ -20,7 +27,10 @@ export default function Compare() {
     setIsComparing(true);
 
     try {
-      const result = await carbonApi.compareWebsites(url1, url2);
+      const result = await carbonApi.compareWebsites(
+  formatUrl(url1),
+  formatUrl(url2)
+);
 
    
       if (result.site1 && result.site2) {
