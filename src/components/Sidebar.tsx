@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock ,Info, Phone} from 'lucide-react';
+
 import {
   LayoutDashboard,
   FolderOpen,
@@ -13,8 +13,10 @@ import {
   Award,
   Home,
   Info,
-  Phone
+  Phone,
+  Clock
 } from 'lucide-react';
+
 import { useAppStore } from '../store/appStore';
 
 const navItems = [
@@ -28,15 +30,11 @@ const navItems = [
   { path: '/trends', icon: TrendingUp, label: 'Weekly Trends' },
   { path: '/badge', icon: Award, label: 'Carbon Badge' },
   { path: '/report', icon: Mail, label: 'Email Report' },
-<<<<<<< HEAD
-  { path: '/history', icon: Clock, label: 'History' },  
-            
-=======
 
-  // ✅ New Pages
+  // ✅ keep all needed pages
+  { path: '/history', icon: Clock, label: 'History' },
   { path: '/about', icon: Info, label: 'About' },
   { path: '/contact', icon: Phone, label: 'Contact' },
->>>>>>> 3d8d1d0c4736e98b19b8aeb69b22935aba8c878d
 ];
 
 export default function Sidebar() {
