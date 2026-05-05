@@ -22,9 +22,18 @@ export default function Compare() {
     try {
       const result = await carbonApi.compareWebsites(url1, url2);
 
-      // Backend response को safely store में save करें
-      setComparisonData('site1', result.site1 || result);
-      setComparisonData('site2', result.site2 || result);
+   
+      if (result.site1 && result.site2) {
+  setComparisonData('site1', result.site1);
+  setComparisonData('site2', result.site2);
+} else if (result.first && result.second) {
+  setComparisonData('site1', result.first);
+  setComparisonData('site2', result.second);
+} else {
+  // fallback (if backend returns single object)
+  setComparisonData('site1', result);
+  setComparisonData('site2', result);
+}
 
       console.log("✅ Comparison Result:", result);
 
@@ -48,9 +57,30 @@ export default function Compare() {
 
   // Safe value extractor function
   const getValue = (site: any, key: string, defaultValue = 0) => {
-    if (!site) return defaultValue;
-    return site[key] ?? site[`co2PerVisitGrams`] ?? site[`totalTransferBytes`] ?? defaultValue;
-  };
+  if (!site) return defaultValue;
+
+  switch (key) {
+    case 'pageSize':
+      return site.totalTransferBytes
+        ? site.totalTransferBytes / (1024 * 1024)
+        : defaultValue;
+
+    case 'co2Emission':
+      return site.co2PerVisitGrams ?? defaultValue;
+
+    case 'loadTime':
+      return site.loadTimeSeconds ?? defaultValue;
+
+    case 'totalResources':
+      return site.totalRequests ?? defaultValue;
+
+    case 'performanceScore':
+      return site.performanceScore ?? defaultValue;
+
+    default:
+      return site[key] ?? defaultValue;
+  }
+};
 
   const metrics = [
     { key: 'pageSize', label: 'Page Size', unit: 'MB', icon: FileText, lowerIsBetter: true },
